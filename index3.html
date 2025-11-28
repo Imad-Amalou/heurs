@@ -1,0 +1,975 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Le Village du Temps</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Écran d'introduction professionnel */
+        #intro-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, #1a1a3e 0%, #0a0a1e 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 1s ease;
+        }
+
+        #intro-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Effet d'étoiles en arrière-plan */
+        .stars {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 3s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        /* Logo du jeu */
+        .game-logo {
+            font-size: 56px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8),
+                         0 0 40px rgba(255, 215, 0, 0.5),
+                         0 5px 10px rgba(0, 0, 0, 0.8);
+            margin-bottom: 20px;
+            animation: glow 2s ease-in-out infinite;
+            letter-spacing: 3px;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 20px rgba(255, 215, 0, 0.8), 0 0 40px rgba(255, 215, 0, 0.5); }
+            50% { text-shadow: 0 0 30px rgba(255, 215, 0, 1), 0 0 60px rgba(255, 215, 0, 0.8); }
+        }
+
+        .subtitle {
+            font-size: 20px;
+            color: #aaa;
+            margin-bottom: 50px;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+        }
+
+        /* Conteneur du personnage */
+        .character-scene {
+            position: relative;
+            width: 800px;
+            height: 400px;
+            margin-bottom: 40px;
+            perspective: 1000px;
+        }
+
+        /* Plateforme sous le personnage */
+        .platform {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 10px;
+            background: linear-gradient(to bottom, #444, #222);
+            border-radius: 50%;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .character-container {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateX(-50%) translateY(0px); }
+            50% { transform: translateX(-50%) translateY(-20px); }
+        }
+
+        .character {
+            width: 120px;
+            height: 180px;
+            position: relative;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+        }
+
+        /* Tête */
+        .head {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #ffdbac 0%, #f5c89a 100%);
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 20px;
+            border: 3px solid #d4a574;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3),
+                        inset 0 2px 5px rgba(255,255,255,0.3);
+        }
+
+        /* Cheveux */
+        .hair {
+            position: absolute;
+            top: -5px;
+            left: 10px;
+            width: 60px;
+            height: 30px;
+            background: linear-gradient(to bottom, #8B4513, #6B3410);
+            border-radius: 50px 50px 0 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .hair::before, .hair::after {
+            content: '';
+            position: absolute;
+            width: 15px;
+            height: 20px;
+            background: #8B4513;
+            border-radius: 50%;
+        }
+
+        .hair::before { left: -5px; top: 10px; }
+        .hair::after { right: -5px; top: 10px; }
+
+        /* Yeux */
+        .eye {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #000;
+            border-radius: 50%;
+            top: 30px;
+            animation: blink 4s infinite;
+        }
+
+        .eye::before {
+            content: '';
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            top: 3px;
+            left: 2px;
+        }
+
+        .eye.left { left: 20px; }
+        .eye.right { right: 20px; }
+
+        .nose {
+            position: absolute;
+            width: 8px;
+            height: 12px;
+            background: #d4a574;
+            border-radius: 0 50% 50% 50%;
+            top: 42px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .mouth {
+            position: absolute;
+            width: 30px;
+            height: 15px;
+            border: 2px solid #000;
+            border-top: none;
+            border-radius: 0 0 30px 30px;
+            bottom: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: talk 0.5s infinite;
+        }
+
+        /* Corps */
+        .body {
+            width: 60px;
+            height: 70px;
+            background: linear-gradient(135deg, #4169E1 0%, #2a4ba8 100%);
+            position: absolute;
+            top: 75px;
+            left: 30px;
+            border-radius: 10px 10px 0 0;
+            border: 3px solid #1e40af;
+            box-shadow: inset 0 2px 10px rgba(255,255,255,0.2);
+        }
+
+        /* Bras */
+        .arm {
+            width: 15px;
+            height: 50px;
+            background: linear-gradient(135deg, #ffdbac 0%, #f5c89a 100%);
+            position: absolute;
+            border-radius: 10px;
+            border: 2px solid #d4a574;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .arm.left {
+            top: 80px;
+            left: 10px;
+            transform-origin: top;
+            animation: wave-left 2s infinite;
+        }
+
+        .arm.right {
+            top: 80px;
+            right: 10px;
+            transform-origin: top;
+            animation: wave-right 2s infinite;
+        }
+
+        /* Jambes */
+        .leg {
+            width: 18px;
+            height: 45px;
+            background: linear-gradient(to bottom, #2c5aa0, #1e4080);
+            position: absolute;
+            top: 140px;
+            border-radius: 0 0 8px 8px;
+            border: 2px solid #1e40af;
+        }
+
+        .leg.left {
+            left: 35px;
+            animation: walk-left 1.2s infinite;
+        }
+
+        .leg.right {
+            right: 35px;
+            animation: walk-right 1.2s infinite;
+        }
+
+        .foot {
+            width: 22px;
+            height: 10px;
+            background: #654321;
+            position: absolute;
+            border-radius: 5px;
+            bottom: -10px;
+            box-shadow: 0 2px 3px rgba(0,0,0,0.3);
+        }
+
+        .foot.left { left: -2px; }
+        .foot.right { right: -2px; }
+
+        /* Bulle de dialogue professionnelle */
+        .dialogue-box {
+            position: relative;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.95) 100%);
+            border-radius: 20px;
+            padding: 30px 40px;
+            max-width: 700px;
+            min-height: 120px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5),
+                        inset 0 1px 0 rgba(255,255,255,0.8);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            animation: fadeInUp 0.8s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .dialogue-box::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-bottom: 20px solid rgba(255,255,255,0.95);
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            filter: drop-shadow(0 -2px 3px rgba(0,0,0,0.1));
+        }
+
+        .dialogue-text {
+            font-size: 20px;
+            color: #222;
+            line-height: 1.8;
+            text-align: center;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(255,255,255,0.8);
+        }
+
+        .dialogue-name {
+            position: absolute;
+            top: -15px;
+            left: 30px;
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #333;
+            padding: 5px 20px;
+            border-radius: 15px;
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+        }
+
+        /* Boutons professionnels */
+        .intro-controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 20px;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn span {
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ffd700, #ffed4e);
+            color: #333;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Indicateur de progression */
+        .progress-indicator {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .progress-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transition: all 0.3s;
+        }
+
+        .progress-dot.active {
+            background: #ffd700;
+            box-shadow: 0 0 10px #ffd700;
+            transform: scale(1.3);
+        }
+
+        /* Animations */
+        @keyframes wave-left {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-25deg); }
+            75% { transform: rotate(15deg); }
+        }
+
+        @keyframes wave-right {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(25deg); }
+            75% { transform: rotate(-15deg); }
+        }
+
+        @keyframes walk-left {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(-5deg); }
+        }
+
+        @keyframes walk-right {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(8px) rotate(5deg); }
+        }
+
+        @keyframes talk {
+            0%, 100% { height: 15px; border-radius: 0 0 30px 30px; }
+            50% { height: 8px; border-radius: 0 0 20px 20px; }
+        }
+
+        @keyframes blink {
+            0%, 90%, 100% { height: 12px; }
+            95% { height: 2px; }
+        }
+
+        /* Écran de jeu */
+        #game-screen {
+            display: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        #game-screen.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 1s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            max-width: 700px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 30px;
+            font-size: 42px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .time-input-section {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .input-label {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            padding: 18px 30px;
+            font-size: 28px;
+            border: 3px solid #667eea;
+            border-radius: 15px;
+            text-align: center;
+            width: 220px;
+            margin: 15px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #764ba2;
+            box-shadow: 0 0 20px rgba(118, 75, 162, 0.3);
+            transform: scale(1.05);
+        }
+
+        .game-btn {
+            padding: 18px 50px;
+            font-size: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 8px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .game-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .game-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .time-display {
+            font-size: 82px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+            margin: 40px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            font-family: 'Courier New', monospace;
+        }
+
+        .events {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 20px;
+            padding: 25px;
+            margin: 25px 0;
+            min-height: 180px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .event {
+            padding: 15px 20px;
+            margin: 12px 0;
+            border-radius: 12px;
+            font-size: 20px;
+            animation: slideIn 0.5s ease;
+            font-weight: 500;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-30px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .event.meal {
+            background: linear-gradient(135deg, #fff3cd, #ffe69c);
+            border-left: 5px solid #ffc107;
+        }
+
+        .event.mirror {
+            background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+            border-left: 5px solid #17a2b8;
+        }
+
+        .event.bell {
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+            border-left: 5px solid #dc3545;
+        }
+
+        .controls {
+            text-align: center;
+            margin-top: 25px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .game-logo { font-size: 36px; }
+            .character-scene { width: 100%; height: 300px; }
+            .dialogue-box { max-width: 90%; padding: 20px; }
+            .dialogue-text { font-size: 16px; }
+            .time-display { font-size: 56px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Écran d'introduction -->
+    <div id="intro-screen">
+        <!-- Étoiles d'arrière-plan -->
+        <div class="stars" id="stars"></div>
+
+        <!-- Logo et titre -->
+        <div class="game-logo">⏰ LE VILLAGE DU TEMPS ⏰</div>
+        <div class="subtitle">Une Aventure Temporelle</div>
+
+        <!-- Scène du personnage -->
+        <div class="character-scene">
+            <div class="platform"></div>
+            <div class="character-container">
+                <div class="character">
+                    <div class="head">
+                        <div class="hair"></div>
+                        <div class="eye left"></div>
+                        <div class="eye right"></div>
+                        <div class="nose"></div>
+                        <div class="mouth"></div>
+                    </div>
+                    <div class="body"></div>
+                    <div class="arm left"></div>
+                    <div class="arm right"></div>
+                    <div class="leg left">
+                        <div class="foot left"></div>
+                    </div>
+                    <div class="leg right">
+                        <div class="foot right"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Boîte de dialogue -->
+        <div class="dialogue-box">
+            <div class="dialogue-name">Gardienne Leticia</div>
+            <div class="dialogue-text" id="dialogue-text"></div>
+        </div>
+
+        <!-- Indicateur de progression -->
+        <div class="progress-indicator" id="progress-indicator"></div>
+
+        <!-- Contrôles -->
+        <div class="intro-controls">
+            <button class="btn btn-secondary" onclick="skipIntro()">
+                <span>⏭️ Passer</span>
+            </button>
+            <button class="btn btn-primary" onclick="nextDialogue()" id="next-btn">
+                <span>Suivant ➡️</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Écran de jeu -->
+    <div id="game-screen">
+        <div class="game-container">
+            <h1>🏰 LE VILLAGE DU TEMPS 🏰</h1>
+            
+            <div class="time-input-section" id="input-section">
+                <p class="input-label">⏰ Choisissez l'heure de départ</p>
+                <input type="text" id="time-input" placeholder="14:30" maxlength="5">
+                <br>
+                <button class="game-btn" onclick="startGame()">🚀 Commencer l'Aventure</button>
+            </div>
+
+            <div id="game-content" class="hidden">
+                <div class="time-display" id="time-display">00:00</div>
+                
+                <div class="events" id="events">
+                    <p style="text-align: center; color: #999; font-size: 18px;">✨ En attente d'événements magiques...</p>
+                </div>
+
+                <div class="controls">
+                    <button class="game-btn" onclick="nextMinute()">⏭️ +1 Minute</button>
+                    <button class="game-btn" onclick="autoPlay()" id="auto-btn" style="background: linear-gradient(135deg, #28a745, #20c997);">▶️ Lecture Auto</button>
+                    <button class="game-btn" onclick="resetGame()" style="background: linear-gradient(135deg, #dc3545, #c82333);">🔄 Recommencer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Créer les étoiles
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+        createStars();
+
+        // Dialogues de l'intro
+        const dialogues = [
+            "Bienvenue dans le Village du Temps, cher voyageur ! Je suis laetitia. la plus belle au monde, la gardienne de l'horloge magique.",
+            "Notre village est un lieu unique où le temps révèle ses secrets les plus mystérieux...",
+            "Chaque instant peut apporter un événement extraordinaire : un repas partagé, une cloche qui résonne, ou même un miroir temporel !",
+            "Les temps miroirs sont particulièrement fascinants : parfois parfaits, parfois imparfaits, ils apportent chance et magie !",
+            "Votre mission sera d'observer l'horloge et de découvrir tous ces moments spéciaux...",
+            "Serez-vous capable de déchiffrer les mystères du temps et de devenir un véritable gardien ?",
+            "Préparez-vous, l'aventure commence maintenant !"
+        ];
+
+        let currentDialogue = 0;
+        let charIndex = 0;
+        let speechSynthesis = window.speechSynthesis;
+        let currentUtterance = null;
+        let isAutoPlaying = false;
+        let autoPlayInterval = null;
+
+        // Créer les indicateurs de progression
+        function createProgressIndicators() {
+            const container = document.getElementById('progress-indicator');
+            dialogues.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'progress-dot';
+                dot.id = `dot-${index}`;
+                container.appendChild(dot);
+            });
+            updateProgressIndicators();
+        }
+
+        function updateProgressIndicators() {
+            dialogues.forEach((_, index) => {
+                const dot = document.getElementById(`dot-${index}`);
+                if (index === currentDialogue) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+
+        // Animation du texte
+        function typeWriter() {
+            const text = dialogues[currentDialogue];
+            const dialogueElement = document.getElementById('dialogue-text');
+            
+            if (charIndex === 0) {
+                speak(text);
+            }
+            
+            if (charIndex < text.length) {
+                dialogueElement.textContent = text.substring(0, charIndex + 1);
+                charIndex++;
+                setTimeout(typeWriter, 40);
+            } else {
+                // Dialogue terminé
+                if (currentDialogue === dialogues.length - 1) {
+                    document.getElementById('next-btn').innerHTML = '<span>Commencer 🎮</span>';
+                }
+            }
+        }
+
+        // Fonction pour faire parler le personnage
+        function speak(text) {
+            if (currentUtterance) {
+                speechSynthesis.cancel();
+            }
+            
+            currentUtterance = new SpeechSynthesisUtterance(text);
+            currentUtterance.lang = 'fr-FR';
+            currentUtterance.rate = 1.15;
+            currentUtterance.pitch = 1.8;
+            currentUtterance.volume = 1.0;
+            
+            const voices = speechSynthesis.getVoices();
+            let childVoice = voices.find(voice => 
+                voice.lang.startsWith('fr') && 
+                (voice.name.toLowerCase().includes('female') || 
+                 voice.name.toLowerCase().includes('femme') ||
+                 voice.name.toLowerCase().includes('julie') ||
+                 voice.name.toLowerCase().includes('hortense') ||
+                 voice.name.toLowerCase().includes('google'))
+            );
+            
+            if (!childVoice) {
+                childVoice = voices.find(voice => 
+                    voice.lang.startsWith('fr') && voice.name.includes('F')
+                );
+            }
+            
+            if (!childVoice) {
+                childVoice = voices.find(voice => voice.lang.startsWith('fr'));
+            }
+            
+            if (childVoice) {
+                currentUtterance.voice = childVoice;
+            }
+            
+            speechSynthesis.speak(currentUtterance);
+        }
+
+        speechSynthesis.onvoiceschanged = function() {
+            speechSynthesis.getVoices();
+        };
+
+        function nextDialogue() {
+            if (currentDialogue < dialogues.length - 1) {
+                currentDialogue++;
+                charIndex = 0;
+                updateProgressIndicators();
+                typeWriter();
+            } else {
+                endIntro();
+            }
+        }
+
+        function skipIntro() {
+            speechSynthesis.cancel();
+            endIntro();
+        }
+
+        function endIntro() {
+            speechSynthesis.cancel();
+            document.getElementById('intro-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.add('active');
+        }
+
+        // Démarrer l'intro
+        createProgressIndicators();
+        setTimeout(typeWriter, 1000);
+
+        // Variables du jeu
+        let hours = 0;
+        let minutes = 0;
+
+                function isMealTime(h, m) {
+            if ((h === 7 && m >= 30) || (h === 8 && m === 0)) return "petit déjeuner";
+            if ((h === 11 && m >= 30) || h === 12) return "déjeuner";
+            if ((h === 16 && m >= 0) || h === 16) return "goûter";
+            if ((h === 19 && m >= 0) || h === 20) return "dîner";
+            return null;
+        }
+
+        function isMirrorTime(h, m) {
+            return (h === m) ? "temps miroir parfait" : null;
+        }
+
+        function isBellTime(h, m) {
+            if (m === 0) return "cloche du village";
+            return null;
+        }
+
+        function nextMinute() {
+            minutes++;
+            if (minutes >= 60) {
+                minutes = 0;
+                hours++;
+                if (hours >= 24) hours = 0;
+            }
+            updateTimeDisplay();
+            triggerEvents();
+        }
+
+        function updateTimeDisplay() {
+            const display = document.getElementById('time-display');
+            let hStr = hours.toString().padStart(2, '0');
+            let mStr = minutes.toString().padStart(2, '0');
+            display.textContent = `${hStr}:${mStr}`;
+        }
+
+        function triggerEvents() {
+            const eventsContainer = document.getElementById('events');
+            const eventList = [];
+
+            const meal = isMealTime(hours, minutes);
+            if (meal) eventList.push({type: "meal", text: `🍽️ C'est l'heure du ${meal} !`});
+
+            const mirror = isMirrorTime(hours, minutes);
+            if (mirror) eventList.push({type: "mirror", text: `🪞 Vous observez un ${mirror}.`});
+
+            const bell = isBellTime(hours, minutes);
+            if (bell) eventList.push({type: "bell", text: `🔔 La ${bell} retentit dans le village.`});
+
+            if (eventList.length === 0) {
+                eventsContainer.innerHTML = '<p style="text-align:center; color:#999; font-size:18px;">✨ Aucun événement pour cette minute...</p>';
+            } else {
+                eventsContainer.innerHTML = '';
+                eventList.forEach(ev => {
+                    const div = document.createElement('div');
+                    div.className = `event ${ev.type}`;
+                    div.textContent = ev.text;
+                    eventsContainer.appendChild(div);
+                });
+            }
+        }
+
+        function startGame() {
+            const input = document.getElementById('time-input').value;
+            const parts = input.split(':');
+            if (parts.length === 2) {
+                hours = parseInt(parts[0]);
+                minutes = parseInt(parts[1]);
+            }
+            document.getElementById('input-section').classList.add('hidden');
+            document.getElementById('game-content').classList.remove('hidden');
+            updateTimeDisplay();
+            triggerEvents();
+        }
+
+        function autoPlay() {
+            if (isAutoPlaying) {
+                clearInterval(autoPlayInterval);
+                isAutoPlaying = false;
+                document.getElementById('auto-btn').textContent = "▶️ Lecture Auto";
+            } else {
+                autoPlayInterval = setInterval(nextMinute, 1000);
+                isAutoPlaying = true;
+                document.getElementById('auto-btn').textContent = "⏸️ Pause Auto";
+            }
+        }
+
+        function resetGame() {
+            clearInterval(autoPlayInterval);
+            isAutoPlaying = false;
+            hours = 0;
+            minutes = 0;
+            document.getElementById('time-input').value = '';
+            document.getElementById('input-section').classList.remove('hidden');
+            document.getElementById('game-content').classList.add('hidden');
+            document.getElementById('auto-btn').textContent = "▶️ Lecture Auto";
+        }
+    </script>
+</body>
+</html>
